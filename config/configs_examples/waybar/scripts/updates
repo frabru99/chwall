@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# Esegui il controllo degli aggiornamenti
+# L'opzione -q (quiet) è importante per non avere output extra
+updates=$(dnf check-update -q)
+
+# Controlla il codice di uscita
+exit_code=$?
+
+if [ $exit_code -eq 100 ]; then
+    # Codice 100 = Aggiornamenti disponibili
+    # Contiamo quante righe (pacchetti) ci sono
+    update_count=$(echo "$updates" | wc -l)
+    
+    # Prepara il JSON per Waybar
+    text="$update_count "
+    tooltip="$update_count aggiornamenti disponibili.\nClicca per aprire un terminale ed eseguire l'aggiornamento."
+    
+    # Stampa il JSON
+    printf '{"text": "%s", "tooltip": "%s", "class": "updates"}\n' "$text" "$tooltip"
+
+elif [ $exit_code -eq 0 ]; then
+    # Codice 0 = Nessun aggiornamento
+    # Stampa una stringa vuota per nascondere il modulo
+    echo ""
+
+else
+    # Codice diverso (es. 1) = Errore
+    text="DNF Err "
+    tooltip="Errore durante il controllo DNF (Codice: $exit_code)"
+    printf '{"text": "%s", "tooltip": "%s", "class": "error"}\n' "$text" "$tooltip"
+fi

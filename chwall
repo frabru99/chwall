@@ -1,0 +1,45 @@
+#!/bin/bash
+
+
+# --- Configuration ---
+WALLPAPER_DIR="$HOME/.config/hyprWalls" 
+HYPRLAND_CONF_DIR="$HOME/.config/hypr/hyprland.conf"
+HYPRLOCK_CONF_DIR=" $HOME/.config/hypr/hyprlock.conf" 
+# --- End Configuration ---
+
+
+# Find all image files (jpg, jpeg, png) in the directory
+# You can add more extensions if needed (e.g., "*.webp")
+IMAGE_FILES=$(find "$WALLPAPER_DIR" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \))
+
+# Check if any images were found
+if [ -z "$IMAGE_FILES" ]; then
+    echo "No images found in $WALLPAPER_DIR"
+    exit 1
+fi
+
+# Pipe the list of images into fzf.
+# --preview: specifies the command to run for the preview window.
+#   '{}' is a placeholder for the currently selected line (the image path).
+#   'chafa -s 50x50 --fill symbols "{}"' creates a 50x50 character preview.
+#   Adjust the size ('-s 50x50') to fit your preference.
+SELECTED_IMAGE=$(echo "$IMAGE_FILES" | fzf \
+   --preview 'kitty +kitten icat --clear --transfer-mode=memory --stdin=no --place={$FZF_PREVIEW_COLUMNS}x{$FZF_PREVIEW_LINES}@0x0 {}' \
+   #--preview 'chafa --clear -s $(tput cols)x$(tput lines) --fill solid {}' \
+   --preview-window=right:60%:wrap \
+   --bind "ctrl-c:abort")
+
+# Exit if no image was selected (e.g., user pressed Esc or Ctrl-C)
+if [ -z "$SELECTED_IMAGE" ]; then
+	echo "No Image Selected!"
+    exit 0
+fi
+
+
+# Searches for a line '$wall = *' in hyprland.conf and hyprlock.conf file in order to change the wallpaper path. 
+# When the files are modified, the wallpaper is updated, with also the colorscheme thanks to pywal (checks .config files for more!)
+
+sed -i "s|\$wall =.*|\$wall = $SELECTED_IMAGE|"  $HYPRLAND_CONF_DIR
+sed -i "s|\$wall =.*|\$wall = $SELECTED_IMAGE|"  $HYPRLOCK_CONF_DIR
+
+echo "Wallpaper set to: $SELECTED_IMAGE"
