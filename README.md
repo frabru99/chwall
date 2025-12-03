@@ -164,10 +164,3 @@ Everything is inside the configuration header at the top of the `chwall` script.
 * **fzf preview not showing** → Install `kitty` or switch the preview command to `chafa`.
 * **Colorscheme not updating** → Check that pywal hooks are sourced by the theme (Waybar, Wofi, etc.).
 
----
-
-## 📜 License
-
-MIT — Feel free to modify, share, and adapt.
-
----
