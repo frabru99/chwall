@@ -24,8 +24,10 @@ fi
 #   'chafa -s 50x50 --fill symbols "{}"' creates a 50x50 character preview.
 #   Adjust the size ('-s 50x50') to fit your preference.
 SELECTED_IMAGE=$(echo "$IMAGE_FILES" | fzf \
+   --layout=reverse --border=rounded --margin=1,1 \
+   --color=bg+:-1,fg:7,fg+:7,hl:4,hl+:4,info:3,prompt:2,pointer:5,marker:6,spinner:1,border:8 \
+   --prompt="   Select Image ❯ " --pointer="▶ " --marker="✓ " \
    --preview 'kitty +kitten icat --clear --transfer-mode=memory --stdin=no --place={$FZF_PREVIEW_COLUMNS}x{$FZF_PREVIEW_LINES}@0x0 {}' \
-   #--preview 'chafa --clear -s $(tput cols)x$(tput lines) --fill solid {}' \
    --preview-window=right:60%:wrap \
    --bind "ctrl-c:abort")
 
