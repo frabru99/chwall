@@ -4,7 +4,9 @@
 # --- Configuration ---
 WALLPAPER_DIR="$HOME/.config/hyprWalls" 
 HYPRLAND_CONF_DIR="$HOME/.config/hypr/hyprland.conf"
-HYPRLOCK_CONF_DIR=" $HOME/.config/hypr/hyprlock.conf" 
+HYPRLOCK_CONF_DIR=" $HOME/.config/hypr/hyprlock.conf"
+RIVER_CONF_DIR="$HOME/.config/river/init"
+NIRI_CONF_DIR="$HOME/.config/niri/config.kdl"
 # --- End Configuration ---
 
 
@@ -24,11 +26,12 @@ fi
 #   'chafa -s 50x50 --fill symbols "{}"' creates a 50x50 character preview.
 #   Adjust the size ('-s 50x50') to fit your preference.
 SELECTED_IMAGE=$(echo "$IMAGE_FILES" | fzf \
+   --delimiter / --with-nth -1 \
    --layout=reverse --border=rounded --margin=1,1 \
    --color=bg+:-1,fg:7,fg+:7,hl:4,hl+:4,info:3,prompt:2,pointer:5,marker:6,spinner:1,border:8 \
    --prompt="   Select Image ❯ " --pointer="▶ " --marker="✓ " \
    --preview 'kitty +kitten icat --clear --transfer-mode=memory --stdin=no --place={$FZF_PREVIEW_COLUMNS}x{$FZF_PREVIEW_LINES}@0x0 {}' \
-   --preview-window=right:60%:wrap \
+   --preview-window=right:40%:wrap \
    --bind "ctrl-c:abort")
 
 # Exit if no image was selected (e.g., user pressed Esc or Ctrl-C)
@@ -38,10 +41,33 @@ if [ -z "$SELECTED_IMAGE" ]; then
 fi
 
 
-# Searches for a line '$wall = *' in hyprland.conf and hyprlock.conf file in order to change the wallpaper path. 
-# When the files are modified, the wallpaper is updated, with also the colorscheme thanks to pywal (checks .config files for more!)
+cp $SELECTED_IMAGE /usr/share/sddm/themes/Andromeda-plasma-6
+cp /usr/share/sddm/themes/Andromeda-plasma-6/theme.conf.user /tmp
+NAME_IMG=$(echo "$SELECTED_IMAGE" |cut -d/ -f6)
+sed -i "s|background =.*|background = $NAME_IMG|" /tmp/theme.conf.user
+cat /tmp/theme.conf.user > /usr/share/sddm/themes/Andromeda-plasma-6/theme.conf.user
 
-sed -i "s|\$wall =.*|\$wall = $SELECTED_IMAGE|"  $HYPRLAND_CONF_DIR
-sed -i "s|\$wall =.*|\$wall = $SELECTED_IMAGE|"  $HYPRLOCK_CONF_DIR
+if [[ $DESKTOP_SESSION == "niri" ]]; then
+	qs -c noctalia-shell ipc call wallpaper set $SELECTED_IMAGE
+	wal -i $SELECTED_IMAGE -n -q
+	sed -i "s|wall .*|wall \"$SELECTED_IMAGE\"|" $NIRI_CONF_DIR
+	sudo cp $SELECTED_IMAGE /usr/share/sddm/themes/pixie/assets/background.jpg
 
-echo "Wallpaper set to: $SELECTED_IMAGE"
+elif [[ $DESKTOP_SESSION == "mango" ]]; then
+	qs -c noctalia-shell ipc call wallpaper set $SELECTED_IMAGE
+	wal -i $SELECTED_IMAGE -n -q
+	sed -i "s|wall .*|wall \"$SELECTED_IMAGE\"|" $NIRI_CONF_DIR
+	
+elif [[ $DESKTOP_SESSION == "river" ]]; then
+	sed -i "s|wall=.*|wall=$SELECTED_IMAGE|" $RIVER_CONF_DIR
+	bash $RIVER_CONF_DIR
+	~/.config/mako/update-theme.sh
+else
+	sed -i "s|\$wall =.*|\$wall = $SELECTED_IMAGE|"  $HYPRLAND_CONF_DIR
+	~/.config/mako/update-theme.sh
+fi
+
+sed -i "s|\$wall =.*|\$wall = $SELECTED_IMAGE|"  $HYPRLOCK_CONF_DIR	
+
+clear
+fastfetch
